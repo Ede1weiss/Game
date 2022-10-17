@@ -15,6 +15,12 @@ h1 {
   text-align: center;
 }
 
+h3 {
+  color: #777;
+  font-family: monospace;
+  text-align: center;
+}
+
 .background {
   table-layout: fixed;
   border-spacing: 0;
@@ -83,8 +89,8 @@ h1 {
 </head>
 <body>
 
-<h1 id="h2">超级小We</h1>
-
+<h1 id="h1">超级小We</h1>
+<h3 id="h2">当前死亡次数: 0, 当前游戏时间: 00:00:00</h3>
 <script>
 var LEVELS = [
 	[	"                                                                                               ",
@@ -537,6 +543,7 @@ Player.prototype.act = function(step, level, keys) {
 
 Level.prototype.playerTouched = function(type, actor) {
 	if ((type == "lava" || type == "Lava") && this.status == null) {
+		deadCount ++;
 		this.status = "lost";
 		this.finishDelay = 1;
 	} else if (type == "coin") {
@@ -605,16 +612,52 @@ function runLevel(level, Display, andThen) {
 	});
 }
 
+var deadCount = 0;
+var levelN = 1;
+var timeStr = '00:00:00';
+var s = 0;
+var f = 0;
+var h = 0;
+
 function runGame(plans, Display) {
+	deadCount = 0;
+	s = 0;
+	f = 0;
+	h = 0;
+
+	let int = setInterval(function () {
+                    s += 1;
+                    if (s === 60) {
+                        s = 0;
+                        f += 1;
+                        if (f === 60) {
+                            h += 1;
+                        }
+                    }
+                    if (s < 10 && f < 10) {
+                        timeStr = '0' + h + ':' + 0 + f + ':' + 0 + s;
+                    } else if (s < 10 && f >= 10) {
+                        timeStr = '0' + h + ':' + f + ':' + 0 + s;
+                    } else if (s >= 10 && f < 10) {
+                        timeStr = '0' + h + ':' + 0 + f + ':' + s;
+                    } else if (s >= 10 && f >= 10) {
+                        timeStr = '0' + h + ':' + f + ':' + s;
+                    }
+					document.getElementById('h2').innerHTML = '当前死亡次数: ' + deadCount + ', 当前游戏时间: ' + timeStr;
+                }, 1000);
+
 	function startLevel(n) {
-		document.getElementById('h2').innerHTML = '超级小We 第' + (n+1) + '关';
+		levelN = n + 1;
+		document.getElementById('h1').innerHTML = '超级小We 第' + (n+1) + '关';
 		runLevel(new Level(plans[n]), Display, function(status) {
 			if (status == "lost")
 				startLevel(n);
 			else if (n < plans.length - 1)
 				startLevel(n + 1);
-			else
+			else{
 				mySuccAlert.alertbox();
+				clearInterval(int);
+			}
 		});
 	}
 	startLevel(0);
@@ -633,12 +676,20 @@ var mySuccAlert = {
 		alertOpacity.style.height = windowHeight+"px"; 
 		alertContainer.appendChild(alertOpacity)
 		alertMainBox = document.createElement("div");
-		alertMainBox.style.cssText="position:absolute;width:300px;height:200px;text-align:center;background-image: url('./img/finish.png');background-size:100% 100%;z-index:10000;"
+		alertMainBox.style.cssText="position:absolute;width:400px;height:300px;text-align:center;background:#FFF;background-image: url('./img/finish.png');background-size:400px 280px;background-repeat: no-repeat;z-index:10000;"
 		alertMainBoxLeft = (windowWidth-200)/3;
 		alertMainBoxTop = (windowHeight-200)/3;
 		alertMainBox.style.left = alertMainBoxLeft+"px";
 		alertMainBox.style.top = alertMainBoxTop+"px";
 		alertContainer.appendChild(alertMainBox);
+
+		
+		alertText = document.createElement("div");
+		alertText.id = "alertText";
+		alertText.style.cssText = "position:absolute;bottom:0px;left:0px;width:330px;height:20px;background:#FFF;cursor:pointer";
+		alertText.appendChild(document.createTextNode('总死亡次数: ' + deadCount + ', 总游戏时长: ' + timeStr));
+		alertMainBox.appendChild(alertText);
+
 		alertClose = document.createElement("div");
 		alertClose.id = "closeBox";
 		alertClose.style.cssText = "position:absolute;bottom:0px;right:0px;width:70px;height:20px;background:yellow;cursor:pointer";
@@ -654,7 +705,6 @@ var mySuccAlert = {
 }
 
 runGame(LEVELS, DOMDisplay);
-
 </script>
 </body>
 </html>
